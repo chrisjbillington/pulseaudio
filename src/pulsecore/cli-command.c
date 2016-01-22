@@ -1735,7 +1735,7 @@ static int pa_cli_command_port_offset(pa_core *c, pa_tokenizer *t, pa_strbuf *bu
     const char *n, *p, *l;
     pa_device_port *port;
     pa_card *card;
-    int32_t offset;
+    int64_t offset;
 
     pa_core_assert_ref(c);
     pa_assert(t);
@@ -1757,7 +1757,7 @@ static int pa_cli_command_port_offset(pa_core *c, pa_tokenizer *t, pa_strbuf *bu
         return -1;
     }
 
-    if (pa_atoi(l, &offset) < 0) {
+    if (pa_atol(l, &offset) < 0) {
         pa_strbuf_puts(buf, "Failed to parse the latency offset.\n");
         return -1;
     }

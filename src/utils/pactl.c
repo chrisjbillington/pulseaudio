@@ -65,7 +65,7 @@ static uint32_t
 
 static bool short_list_format = false;
 static uint32_t module_index;
-static int32_t latency_offset;
+static int64_t latency_offset;
 static bool suspend;
 static pa_cvolume volume;
 static enum volume_flags {
@@ -130,6 +130,8 @@ static enum {
     SET_SOURCE_OUTPUT_MUTE,
     SET_SINK_FORMATS,
     SET_PORT_LATENCY_OFFSET,
+    SET_SINK_LATENCY_OFFSET,
+    SET_SOURCE_LATENCY_OFFSET,
     SUBSCRIBE
 } action = NONE;
 
@@ -2041,7 +2043,7 @@ int main(int argc, char *argv[]) {
 
             card_name = pa_xstrdup(argv[optind+1]);
             port_name = pa_xstrdup(argv[optind+2]);
-            if (pa_atoi(argv[optind + 3], &latency_offset) < 0) {
+            if (pa_atol(argv[optind + 3], &latency_offset) < 0) {
                 pa_log(_("Could not parse latency offset"));
                 goto quit;
             }
