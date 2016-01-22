@@ -254,6 +254,8 @@ _pactl_completion() {
             'set-sink-port: set the sink port of a sink'
             'set-source-port: set the source port of a source'
             'set-port-latency-offset: set a latency offset on a port'
+            'set-sink-latency-offset: set a latency offset on a sink'
+            'set-source-latency-offset: set a latency offset on a source'
             'set-sink-volume: set the volume of a sink'
             'set-source-volume: set the volume of a source'
             'set-sink-input-volume: set the volume of a stream'
@@ -492,6 +494,8 @@ _pactl_completion() {
             set-source-output-mute)                _set_source_output_mute_parameter;;
             set-sink-formats)                      if ((CURRENT == 2)); then _devices; fi;;
             set-port-latency-offset)               _set_port_latency_offset_parameter;;
+            set-sink-latency-offset)               if ((CURRENT == 2)); then _devices; fi;;
+            set-source-latency-offset)             if ((CURRENT == 2)); then _devices; fi;;
         esac
     }
 
@@ -534,6 +538,8 @@ _pacmd_completion() {
             'set-sink-port: set the sink port of a sink'
             'set-source-port: set the source port of a source'
             'set-port-latency-offset: set a latency offset on a port'
+            'set-sink-latency-offset: set a latency offset on a sink'
+            'set-source-latency-offset: set a latency offset on a source'
             'suspend-sink: suspend or resume a sink'
             'suspend-source: suspend or resume a source'
             'suspend: suspend all sinks and sources'

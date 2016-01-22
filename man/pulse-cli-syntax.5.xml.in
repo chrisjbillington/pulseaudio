@@ -163,6 +163,16 @@ License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
     </option>
 
     <option>
+      <p><opt>set-sink-latency-offset</opt> <arg>sink-index|sink-name</arg> <arg>offset</arg> </p>
+      <optdesc><p>Change the latency offset of a sink</p></optdesc>
+    </option>
+
+    <option>
+      <p><opt>set-source-latency-offset</opt> <arg>source-index|source-name</arg> <arg>offset</arg> </p>
+      <optdesc><p>Change the latency offset of a source</p></optdesc>
+    </option>
+
+    <option>
       <p><opt>suspend-sink|suspend-source</opt> <arg>index|name</arg> <arg>boolean</arg></p>
       <optdesc><p>Suspend (i.e. disconnect from the underlying hardware) a sink
       (resp. source).</p></optdesc>

@@ -184,6 +184,18 @@ License along with PulseAudio; if not, see <http://www.gnu.org/licenses/>.
     </option>
 
     <option>
+      <p><opt>set-sink-latency-offset</opt> <arg>SINK</arg> <arg>OFFSET</arg></p>
+      <optdesc><p>Set a latency offset to a specified sink (identified by its symbolic name or numerical index).
+      <arg>OFFSET</arg> is a number which represents the latency offset in microseconds</p></optdesc>
+    </option>
+
+    <option>
+      <p><opt>set-source-latency-offset</opt> <arg>SOURCE</arg> <arg>OFFSET</arg></p>
+      <optdesc><p>Set a latency offset to a specified source (identified by its symbolic name or numerical index).
+      <arg>OFFSET</arg> is a number which represents the latency offset in microseconds</p></optdesc>
+    </option>
+
+    <option>
       <p><opt>set-sink-volume</opt> <arg>SINK</arg> <arg>VOLUME [VOLUME ...]</arg></p>
       <optdesc><p>Set the volume of the specified sink (identified by its symbolic name or numerical index).
       <arg>VOLUME</arg> can be specified as an integer (e.g. 2000, 16384), a linear factor (e.g. 0.4, 1.100), a percentage

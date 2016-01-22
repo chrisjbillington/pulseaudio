@@ -134,6 +134,8 @@ static int pa_cli_command_card_profile(pa_core *c, pa_tokenizer *t, pa_strbuf *b
 static int pa_cli_command_sink_port(pa_core *c, pa_tokenizer *t, pa_strbuf *buf, bool *fail);
 static int pa_cli_command_source_port(pa_core *c, pa_tokenizer *t, pa_strbuf *buf, bool *fail);
 static int pa_cli_command_port_offset(pa_core *c, pa_tokenizer *t, pa_strbuf *buf, bool *fail);
+static int pa_cli_command_sink_offset(pa_core *c, pa_tokenizer *t, pa_strbuf *buf, bool *fail);
+static int pa_cli_command_source_offset(pa_core *c, pa_tokenizer *t, pa_strbuf *buf, bool *fail);
 static int pa_cli_command_dump_volumes(pa_core *c, pa_tokenizer *t, pa_strbuf *buf, bool *fail);
 
 /* A method table for all available commands */
@@ -168,6 +170,8 @@ static const struct command commands[] = {
     { "set-sink-port",           pa_cli_command_sink_port,          "Change the port of a sink (args: index|name, port-name)", 3},
     { "set-source-port",         pa_cli_command_source_port,        "Change the port of a source (args: index|name, port-name)", 3},
     { "set-port-latency-offset", pa_cli_command_port_offset,        "Change the latency of a port (args: card-index|card-name, port-name, latency-offset)", 4},
+    { "set-sink-latency-offset", pa_cli_command_sink_offset,        "Change the latency of a sink (args: sink-index|sink-name, latency-offset)", 3},
+    { "set-source-latency-offset", pa_cli_command_source_offset,    "Change the latency of a source (args: source-index|source-name, latency-offset)", 3},
     { "suspend-sink",            pa_cli_command_suspend_sink,       "Suspend sink (args: index|name, bool)", 3},
     { "suspend-source",          pa_cli_command_suspend_source,     "Suspend source (args: index|name, bool)", 3},
     { "suspend",                 pa_cli_command_suspend,            "Suspend all sinks and all sources (args: bool)", 2},
@@ -1773,6 +1777,76 @@ static int pa_cli_command_port_offset(pa_core *c, pa_tokenizer *t, pa_strbuf *bu
     }
 
     pa_device_port_set_latency_offset(port, offset);
+
+    return 0;
+}
+
+static int pa_cli_command_sink_offset(pa_core *c, pa_tokenizer *t, pa_strbuf *buf, bool *fail) {
+    const char *n, *l;
+    pa_sink *sink;
+    int64_t offset;
+
+    pa_core_assert_ref(c);
+    pa_assert(t);
+    pa_assert(buf);
+    pa_assert(fail);
+
+    if (!(n = pa_tokenizer_get(t, 1))) {
+           pa_strbuf_puts(buf, "You need to specify a sink either by its name or its index.\n");
+           return -1;
+    }
+
+    if (!(l = pa_tokenizer_get(t, 2))) {
+        pa_strbuf_puts(buf, "You need to specify a latency offset.\n");
+        return -1;
+    }
+
+    if (pa_atol(l, &offset) < 0) {
+        pa_strbuf_puts(buf, "Failed to parse the latency offset.\n");
+        return -1;
+    }
+
+    if (!(sink = pa_namereg_get(c, n, PA_NAMEREG_SINK))) {
+        pa_strbuf_puts(buf, "No sink found by this name or index.\n");
+        return -1;
+    }
+
+    pa_sink_set_latency_offset(sink, offset);
+
+    return 0;
+}
+
+static int pa_cli_command_source_offset(pa_core *c, pa_tokenizer *t, pa_strbuf *buf, bool *fail) {
+    const char *n, *l;
+    pa_source *source;
+    int64_t offset;
+
+    pa_core_assert_ref(c);
+    pa_assert(t);
+    pa_assert(buf);
+    pa_assert(fail);
+
+    if (!(n = pa_tokenizer_get(t, 1))) {
+           pa_strbuf_puts(buf, "You need to specify a source either by its name or its index.\n");
+           return -1;
+    }
+
+    if (!(l = pa_tokenizer_get(t, 2))) {
+        pa_strbuf_puts(buf, "You need to specify a latency offset.\n");
+        return -1;
+    }
+
+    if (pa_atol(l, &offset) < 0) {
+        pa_strbuf_puts(buf, "Failed to parse the latency offset.\n");
+        return -1;
+    }
+
+    if (!(source = pa_namereg_get(c, n, PA_NAMEREG_SOURCE))) {
+        pa_strbuf_puts(buf, "No source found by this name or index.\n");
+        return -1;
+    }
+
+    pa_source_set_latency_offset(source, offset);
 
     return 0;
 }

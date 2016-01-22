@@ -1406,6 +1406,14 @@ static void context_state_callback(pa_context *c, void *userdata) {
                     o = pa_context_set_port_latency_offset(c, card_name, port_name, latency_offset, simple_callback, NULL);
                     break;
 
+                case SET_SINK_LATENCY_OFFSET:
+                    o = pa_context_set_sink_latency_offset(c, sink_name, latency_offset, simple_callback, NULL);
+                    break;
+
+                case SET_SOURCE_LATENCY_OFFSET:
+                    o = pa_context_set_source_latency_offset(c, source_name, latency_offset, simple_callback, NULL);
+                    break;
+
                 case SUBSCRIBE:
                     pa_context_set_subscribe_callback(c, context_subscribe_callback, NULL);
 
@@ -1582,6 +1590,7 @@ static void help(const char *argv0) {
     printf("%s %s %s %s\n", argv0, _("[options]"), "set-(sink-input|source-output)-mute", _("#N 1|0|toggle"));
     printf("%s %s %s %s\n", argv0, _("[options]"), "set-sink-formats", _("#N FORMATS"));
     printf("%s %s %s %s\n", argv0, _("[options]"), "set-port-latency-offset", _("CARD-NAME|CARD-#N PORT OFFSET"));
+    printf("%s %s %s %s\n", argv0, _("[options]"), "set-(sink|source)-latency-offset", _("NAME|#N OFFSET"));
     printf("%s %s %s\n",    argv0, _("[options]"), "subscribe");
     printf(_("\nThe special names @DEFAULT_SINK@, @DEFAULT_SOURCE@ and @DEFAULT_MONITOR@\n"
              "can be used to specify the default sink, source and monitor.\n"));
@@ -2044,6 +2053,34 @@ int main(int argc, char *argv[]) {
             card_name = pa_xstrdup(argv[optind+1]);
             port_name = pa_xstrdup(argv[optind+2]);
             if (pa_atol(argv[optind + 3], &latency_offset) < 0) {
+                pa_log(_("Could not parse latency offset"));
+                goto quit;
+            }
+
+        } else if (pa_streq(argv[optind], "set-sink-latency-offset")) {
+            action = SET_SINK_LATENCY_OFFSET;
+
+            if (argc != optind+3) {
+                pa_log(_("You have to specify a sink name/index and a latency offset"));
+                goto quit;
+            }
+
+            sink_name = pa_xstrdup(argv[optind+1]);
+            if (pa_atol(argv[optind + 2], &latency_offset) < 0) {
+                pa_log(_("Could not parse latency offset"));
+                goto quit;
+            }
+
+        } else if (pa_streq(argv[optind], "set-source-latency-offset")) {
+            action = SET_SOURCE_LATENCY_OFFSET;
+
+            if (argc != optind+3) {
+                pa_log(_("You have to specify a source name/index and a latency offset"));
+                goto quit;
+            }
+
+            source_name = pa_xstrdup(argv[optind+1]);
+            if (pa_atol(argv[optind + 2], &latency_offset) < 0) {
                 pa_log(_("Could not parse latency offset"));
                 goto quit;
             }

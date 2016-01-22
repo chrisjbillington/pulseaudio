@@ -120,7 +120,8 @@ _pactl() {
                     set-source-port set-sink-volume set-source-volume
                     set-sink-input-volume set-source-output-volume set-sink-mute
                     set-source-mute set-sink-input-mute set-source-output-mute
-                    set-sink-formats set-port-latency-offset subscribe help)
+                    set-sink-formats set-port-latency-offset set-sink-latency-offset
+                    set-source-latency-offset subscribe help)
 
     _init_completion -n = || return
     preprev=${words[$cword-2]}
