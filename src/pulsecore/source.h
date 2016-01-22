@@ -112,8 +112,12 @@ struct pa_source {
     pa_device_port *active_port;
     pa_atomic_t mixer_dirty;
 
-    /* The latency offset is inherited from the currently active port */
+    /* This latency offset is inherited from the currently active port */
     int64_t port_latency_offset;
+
+    /* This latency offset is specific to the sink and will be summed with the above to give
+     * the total latency offset */
+    int64_t latency_offset;
 
     unsigned priority;
 
@@ -226,6 +230,9 @@ struct pa_source {
         /* This latency offset is a direct copy from s->port_latency_offset */
         int64_t port_latency_offset;
 
+        /* This latency offset is a direct copy from s->latency_offset */
+        int64_t latency_offset;
+
         /* Delayed volume change events are queued here. The events
          * are stored in expiration order. The one expiring next is in
          * the head of the list. */
@@ -270,6 +277,7 @@ typedef enum pa_source_message {
     PA_SOURCE_MESSAGE_SET_PORT,
     PA_SOURCE_MESSAGE_UPDATE_VOLUME_AND_MUTE,
     PA_SOURCE_MESSAGE_SET_PORT_LATENCY_OFFSET,
+    PA_SOURCE_MESSAGE_SET_LATENCY_OFFSET,
     PA_SOURCE_MESSAGE_MAX
 } pa_source_message_t;
 
@@ -289,6 +297,7 @@ typedef struct pa_source_new_data {
     pa_sample_spec sample_spec;
     pa_channel_map channel_map;
     uint32_t alternate_sample_rate;
+    int64_t latency_offset;
     pa_cvolume volume;
     bool muted:1;
 
@@ -311,6 +320,7 @@ void pa_source_new_data_set_sample_spec(pa_source_new_data *data, const pa_sampl
 void pa_source_new_data_set_channel_map(pa_source_new_data *data, const pa_channel_map *map);
 void pa_source_new_data_set_alternate_sample_rate(pa_source_new_data *data, const uint32_t alternate_sample_rate);
 void pa_source_new_data_set_volume(pa_source_new_data *data, const pa_cvolume *volume);
+void pa_source_new_data_set_latency_offset(pa_source_new_data *data, int64_t latency_offset);
 void pa_source_new_data_set_muted(pa_source_new_data *data, bool mute);
 void pa_source_new_data_set_port(pa_source_new_data *data, const char *port);
 void pa_source_new_data_done(pa_source_new_data *data);
@@ -351,6 +361,7 @@ void pa_source_update_flags(pa_source *s, pa_source_flags_t mask, pa_source_flag
 /*** May be called by everyone, from main context */
 
 void pa_source_set_port_latency_offset(pa_source *s, int64_t offset);
+void pa_source_set_latency_offset(pa_source *s, int64_t offset);
 
 /* The returned value is supposed to be in the time domain of the sound card! */
 pa_usec_t pa_source_get_latency(pa_source *s);

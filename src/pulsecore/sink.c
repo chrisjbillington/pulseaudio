@@ -120,6 +120,11 @@ void pa_sink_new_data_set_volume(pa_sink_new_data *data, const pa_cvolume *volum
         data->volume = *volume;
 }
 
+void pa_sink_new_data_set_latency_offset(pa_sink_new_data *data, int64_t latency_offset) {
+    pa_assert(data);
+    data->latency_offset = latency_offset;
+}
+
 void pa_sink_new_data_set_muted(pa_sink_new_data *data, bool mute) {
     pa_assert(data);
 
@@ -314,6 +319,11 @@ pa_sink* pa_sink_new(
     else
         s->port_latency_offset = 0;
 
+    if (data->latency_offset)
+        s->latency_offset = data->latency_offset;
+    else
+        s->latency_offset = 0;
+
     s->save_volume = data->save_volume;
     s->save_muted = data->save_muted;
 
@@ -346,6 +356,7 @@ pa_sink* pa_sink_new(
     s->thread_info.volume_change_safety_margin = core->deferred_volume_safety_margin_usec;
     s->thread_info.volume_change_extra_delay = core->deferred_volume_extra_delay_usec;
     s->thread_info.port_latency_offset = s->port_latency_offset;
+    s->thread_info.latency_offset = s->latency_offset;
 
     /* FIXME: This should probably be moved to pa_sink_put() */
     pa_assert_se(pa_idxset_put(core->sinks, s, &s->index) >= 0);
@@ -1505,10 +1516,18 @@ pa_usec_t pa_sink_get_latency(pa_sink *s) {
 
     pa_assert_se(pa_asyncmsgq_send(s->asyncmsgq, PA_MSGOBJECT(s), PA_SINK_MESSAGE_GET_LATENCY, &usec, 0, NULL) == 0);
 
+    /* Total latency offset is the sum of the port latency offset and the sink latency offset */
+
     /* usec is unsigned, so check that the offset can be added to usec without
      * underflowing. */
     if (-s->port_latency_offset <= (int64_t) usec)
         usec += s->port_latency_offset;
+    else
+        usec = 0;
+
+    /* Similarly checking for underflow */
+    if (-s->latency_offset <= (int64_t) usec)
+        usec += s->latency_offset;
     else
         usec = 0;
 
@@ -1539,10 +1558,18 @@ pa_usec_t pa_sink_get_latency_within_thread(pa_sink *s) {
     if (o->process_msg(o, PA_SINK_MESSAGE_GET_LATENCY, &usec, 0, NULL) < 0)
         return -1;
 
+    /* Total latency offset is the sum of the port latency offset and the sink latency offset */
+
     /* usec is unsigned, so check that the offset can be added to usec without
      * underflowing. */
     if (-s->thread_info.port_latency_offset <= (int64_t) usec)
         usec += s->thread_info.port_latency_offset;
+    else
+        usec = 0;
+
+    /* Similarly checking for underflow */
+    if (-s->thread_info.latency_offset <= (int64_t) usec)
+        usec += s->thread_info.latency_offset;
     else
         usec = 0;
 
@@ -2892,6 +2919,10 @@ int pa_sink_process_msg(pa_msgobject *o, int code, void *userdata, int64_t offse
             s->thread_info.port_latency_offset = offset;
             return 0;
 
+        case PA_SINK_MESSAGE_SET_LATENCY_OFFSET:
+            s->thread_info.latency_offset = offset;
+            return 0;
+
         case PA_SINK_MESSAGE_GET_LATENCY:
         case PA_SINK_MESSAGE_MAX:
             ;
@@ -3297,6 +3328,22 @@ void pa_sink_set_port_latency_offset(pa_sink *s, int64_t offset) {
         pa_assert_se(pa_asyncmsgq_send(s->asyncmsgq, PA_MSGOBJECT(s), PA_SINK_MESSAGE_SET_PORT_LATENCY_OFFSET, NULL, offset, NULL) == 0);
     else
         s->thread_info.port_latency_offset = offset;
+}
+
+/* Called from main context */
+void pa_sink_set_latency_offset(pa_sink *s, int64_t offset) {
+    pa_sink_assert_ref(s);
+    pa_assert_ctl_context();
+
+    s->latency_offset = offset;
+
+    if (PA_SINK_IS_LINKED(s->state))
+        pa_assert_se(pa_asyncmsgq_send(s->asyncmsgq, PA_MSGOBJECT(s), PA_SINK_MESSAGE_SET_LATENCY_OFFSET, NULL, offset, NULL) == 0);
+    else
+        s->thread_info.latency_offset = offset;
+
+    pa_subscription_post(s->core, PA_SUBSCRIPTION_EVENT_SINK|PA_SUBSCRIPTION_EVENT_CHANGE, s->index);
+    pa_hook_fire(&s->core->hooks[PA_CORE_HOOK_SINK_LATENCY_OFFSET_CHANGED], s);
 }
 
 /* Called from main context */
