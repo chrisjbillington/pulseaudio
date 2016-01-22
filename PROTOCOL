@@ -371,6 +371,12 @@ PA_COMMAND_DISABLE_SRBCHANNEL
 Tells the client to stop listening on the additional SHM ringbuffer channel.
 Acked by client by sending PA_COMMAND_DISABLE_SRBCHANNEL back.
 
+## v31, implemented by >= 9.0
+#
+New opcodes:
+    PA_COMMAND_SET_SINK_LATENCY_OFFSET
+    PA_COMMAND_SET_SOURCE_LATENCY_OFFSET
+
 #### If you just changed the protocol, read this
 ## module-tunnel depends on the sink/source/sink-input/source-input protocol
 ## internals, so if you changed these, you might have broken module-tunnel.

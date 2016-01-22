@@ -550,6 +550,12 @@ pa_operation* pa_context_set_card_profile_by_name(pa_context *c, const char*name
 /** Set the latency offset of a port. \since 3.0 */
 pa_operation* pa_context_set_port_latency_offset(pa_context *c, const char *card_name, const char *port_name, int64_t offset, pa_context_success_cb_t cb, void *userdata);
 
+/** Set the latency offset of a sink. \since 9.0 */
+pa_operation* pa_context_set_sink_latency_offset(pa_context *c, const char *sink_name, int64_t offset, pa_context_success_cb_t cb, void *userdata);
+
+/** Set the latency offset of a source. \since 9.0 */
+pa_operation* pa_context_set_source_latency_offset(pa_context *c, const char *source_name, int64_t offset, pa_context_success_cb_t cb, void *userdata);
+
 /** @} */
 
 /** @{ \name Sink Inputs */

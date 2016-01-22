@@ -1926,6 +1926,56 @@ pa_operation* pa_context_set_port_latency_offset(pa_context *c, const char *card
     return o;
 }
 
+pa_operation* pa_context_set_sink_latency_offset(pa_context *c, const char *sink_name, int64_t offset, pa_context_success_cb_t cb, void *userdata) {
+    pa_operation *o;
+    pa_tagstruct *t;
+    uint32_t tag;
+
+    pa_assert(c);
+    pa_assert(PA_REFCNT_VALUE(c) >= 1);
+
+    PA_CHECK_VALIDITY_RETURN_NULL(c, !pa_detect_fork(), PA_ERR_FORKED);
+    PA_CHECK_VALIDITY_RETURN_NULL(c, c->state == PA_CONTEXT_READY, PA_ERR_BADSTATE);
+    PA_CHECK_VALIDITY_RETURN_NULL(c, sink_name && *sink_name, PA_ERR_INVALID);
+    PA_CHECK_VALIDITY_RETURN_NULL(c, c->version >= 31, PA_ERR_NOTSUPPORTED);
+
+    o = pa_operation_new(c, NULL, (pa_operation_cb_t) cb, userdata);
+
+    t = pa_tagstruct_command(c, PA_COMMAND_SET_SINK_LATENCY_OFFSET, &tag);
+    pa_tagstruct_putu32(t, PA_INVALID_INDEX);
+    pa_tagstruct_puts(t, sink_name);
+    pa_tagstruct_puts64(t, offset);
+    pa_pstream_send_tagstruct(c->pstream, t);
+    pa_pdispatch_register_reply(c->pdispatch, tag, DEFAULT_TIMEOUT, pa_context_simple_ack_callback, pa_operation_ref(o), (pa_free_cb_t) pa_operation_unref);
+
+    return o;
+}
+
+pa_operation* pa_context_set_source_latency_offset(pa_context *c, const char *source_name, int64_t offset, pa_context_success_cb_t cb, void *userdata) {
+    pa_operation *o;
+    pa_tagstruct *t;
+    uint32_t tag;
+
+    pa_assert(c);
+    pa_assert(PA_REFCNT_VALUE(c) >= 1);
+
+    PA_CHECK_VALIDITY_RETURN_NULL(c, !pa_detect_fork(), PA_ERR_FORKED);
+    PA_CHECK_VALIDITY_RETURN_NULL(c, c->state == PA_CONTEXT_READY, PA_ERR_BADSTATE);
+    PA_CHECK_VALIDITY_RETURN_NULL(c, source_name && *source_name, PA_ERR_INVALID);
+    PA_CHECK_VALIDITY_RETURN_NULL(c, c->version >= 31, PA_ERR_NOTSUPPORTED);
+
+    o = pa_operation_new(c, NULL, (pa_operation_cb_t) cb, userdata);
+
+    t = pa_tagstruct_command(c, PA_COMMAND_SET_SOURCE_LATENCY_OFFSET, &tag);
+    pa_tagstruct_putu32(t, PA_INVALID_INDEX);
+    pa_tagstruct_puts(t, source_name);
+    pa_tagstruct_puts64(t, offset);
+    pa_pstream_send_tagstruct(c->pstream, t);
+    pa_pdispatch_register_reply(c->pdispatch, tag, DEFAULT_TIMEOUT, pa_context_simple_ack_callback, pa_operation_ref(o), (pa_free_cb_t) pa_operation_unref);
+
+    return o;
+}
+
 /*** Autoload stuff ***/
 
 PA_WARN_REFERENCE(pa_context_get_autoload_info_by_name, "Module auto-loading no longer supported.");

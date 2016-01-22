@@ -293,6 +293,8 @@ static void command_extension(pa_pdispatch *pd, uint32_t command, uint32_t tag, 
 static void command_set_card_profile(pa_pdispatch *pd, uint32_t command, uint32_t tag, pa_tagstruct *t, void *userdata);
 static void command_set_sink_or_source_port(pa_pdispatch *pd, uint32_t command, uint32_t tag, pa_tagstruct *t, void *userdata);
 static void command_set_port_latency_offset(pa_pdispatch *pd, uint32_t command, uint32_t tag, pa_tagstruct *t, void *userdata);
+static void command_set_sink_latency_offset(pa_pdispatch *pd, uint32_t command, uint32_t tag, pa_tagstruct *t, void *userdata);
+static void command_set_source_latency_offset(pa_pdispatch *pd, uint32_t command, uint32_t tag, pa_tagstruct *t, void *userdata);
 static void command_enable_srbchannel(pa_pdispatch *pd, uint32_t command, uint32_t tag, pa_tagstruct *t, void *userdata);
 
 static const pa_pdispatch_cb_t command_table[PA_COMMAND_MAX] = {
@@ -396,6 +398,9 @@ static const pa_pdispatch_cb_t command_table[PA_COMMAND_MAX] = {
     [PA_COMMAND_SET_SOURCE_PORT] = command_set_sink_or_source_port,
 
     [PA_COMMAND_SET_PORT_LATENCY_OFFSET] = command_set_port_latency_offset,
+
+    [PA_COMMAND_SET_SINK_LATENCY_OFFSET] = command_set_sink_latency_offset,
+    [PA_COMMAND_SET_SOURCE_LATENCY_OFFSET] = command_set_source_latency_offset,
 
     [PA_COMMAND_ENABLE_SRBCHANNEL] = command_enable_srbchannel,
 
@@ -4883,6 +4888,76 @@ static void command_set_port_latency_offset(pa_pdispatch *pd, uint32_t command, 
     CHECK_VALIDITY(c->pstream, port, tag, PA_ERR_NOENTITY);
 
     pa_device_port_set_latency_offset(port, offset);
+
+    pa_pstream_send_simple_ack(c->pstream, tag);
+}
+
+static void command_set_sink_latency_offset(pa_pdispatch *pd, uint32_t command, uint32_t tag, pa_tagstruct *t, void *userdata) {
+    pa_native_connection *c = PA_NATIVE_CONNECTION(userdata);
+    const char *sink_name;
+    uint32_t idx = PA_INVALID_INDEX;
+    int64_t offset;
+    pa_sink *sink = NULL;
+
+    pa_native_connection_assert_ref(c);
+    pa_assert(t);
+
+    if (pa_tagstruct_getu32(t, &idx) < 0 ||
+        pa_tagstruct_gets(t, &sink_name) < 0 ||
+        pa_tagstruct_gets64(t, &offset) < 0 ||
+        !pa_tagstruct_eof(t)) {
+        protocol_error(c);
+        return;
+    }
+
+    CHECK_VALIDITY(c->pstream, c->authorized, tag, PA_ERR_ACCESS);
+    CHECK_VALIDITY(c->pstream, !sink_name || pa_namereg_is_valid_name_or_wildcard(sink_name, PA_NAMEREG_SINK), tag, PA_ERR_INVALID);
+    CHECK_VALIDITY(c->pstream, (idx != PA_INVALID_INDEX) ^ (sink_name != NULL), tag, PA_ERR_INVALID);
+    CHECK_VALIDITY(c->pstream, sink_name, tag, PA_ERR_INVALID);
+
+    if (idx != PA_INVALID_INDEX)
+        sink = pa_idxset_get_by_index(c->protocol->core->sinks, idx);
+    else
+        sink = pa_namereg_get(c->protocol->core, sink_name, PA_NAMEREG_SINK);
+
+    CHECK_VALIDITY(c->pstream, sink, tag, PA_ERR_NOENTITY);
+
+    pa_sink_set_latency_offset(sink, offset);
+
+    pa_pstream_send_simple_ack(c->pstream, tag);
+}
+
+static void command_set_source_latency_offset(pa_pdispatch *pd, uint32_t command, uint32_t tag, pa_tagstruct *t, void *userdata) {
+    pa_native_connection *c = PA_NATIVE_CONNECTION(userdata);
+    const char *source_name;
+    uint32_t idx = PA_INVALID_INDEX;
+    int64_t offset;
+    pa_source *source = NULL;
+
+    pa_native_connection_assert_ref(c);
+    pa_assert(t);
+
+    if (pa_tagstruct_getu32(t, &idx) < 0 ||
+        pa_tagstruct_gets(t, &source_name) < 0 ||
+        pa_tagstruct_gets64(t, &offset) < 0 ||
+        !pa_tagstruct_eof(t)) {
+        protocol_error(c);
+        return;
+    }
+
+    CHECK_VALIDITY(c->pstream, c->authorized, tag, PA_ERR_ACCESS);
+    CHECK_VALIDITY(c->pstream, !source_name || pa_namereg_is_valid_name_or_wildcard(source_name, PA_NAMEREG_SOURCE), tag, PA_ERR_INVALID);
+    CHECK_VALIDITY(c->pstream, (idx != PA_INVALID_INDEX) ^ (source_name != NULL), tag, PA_ERR_INVALID);
+    CHECK_VALIDITY(c->pstream, source_name, tag, PA_ERR_INVALID);
+
+    if (idx != PA_INVALID_INDEX)
+        source = pa_idxset_get_by_index(c->protocol->core->sources, idx);
+    else
+        source = pa_namereg_get(c->protocol->core, source_name, PA_NAMEREG_SOURCE);
+
+    CHECK_VALIDITY(c->pstream, source, tag, PA_ERR_NOENTITY);
+
+    pa_source_set_latency_offset(source, offset);
 
     pa_pstream_send_simple_ack(c->pstream, tag);
 }
